@@ -1,0 +1,17 @@
+#pragma code_page(65001)
+
+#include "Resource.h"
+#include <winres.h>
+
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+
+STRINGTABLE
+BEGIN
+    IDS_TITLE          "GitHub Desktop으로 열기"
+    IDS_TOOLTIP        "GitHub Desktop에서 이 저장소 열기"
+    IDS_ERROR_CAPTION  "GitHub Desktop으로 열기"
+    IDS_ERROR_CLI      "GitHub Desktop 명령줄 도구를 찾을 수 없습니다.\n\nGitHub Desktop에서 명령줄 도구가 설치되어 있는지 확인하세요."
+    IDS_ERROR_NOT_REPO "이 폴더는 더 이상 Git 저장소가 아닙니다."
+    IDS_ERROR_UNSAFE   "경로에 %, ^, "" 문자가 포함되어 있어 GitHub Desktop 명령줄 도구로 안전하게 전달할 수 없습니다."
+    IDS_ERROR_LAUNCH   "GitHub Desktop 명령줄 도구를 실행하지 못했습니다."
+END
