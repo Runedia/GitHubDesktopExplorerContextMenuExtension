@@ -766,10 +766,11 @@ GitHubDesktopExplorerContextMenuExtension/
 │   └── Assets/
 ├── installer/              Install.ps1, Uninstall.ps1, Cleanup-Legacy.ps1
 ├── tests/                  CommonTests.cpp (CTest)
-├── decisions/              버전별 결정 기록
+├── docs/
+│   ├── PRD.md
+│   └── decisions/          버전별 결정 기록
 ├── CMakeLists.txt
-├── build.ps1               빌드 + 테스트 + dist\package 구성
-└── PRD.md
+└── build.ps1               빌드 + 테스트 + dist\package 구성
 ```
 
 README.md는 아직 없다.
@@ -929,20 +930,23 @@ GitHub Desktop에서 현재 저장소 열림
 ```
 
 일반 폴더에서는 해당 메뉴가 존재하지 않는다.
+
 ---
 
 # 29. 구현 상태 (v0.1.0, 2026-10-29)
 
-검증 근거는 `build.ps1` 실행 결과(빌드 성공, CTest `CommonTests` 통과)이다.
+검증 근거는 `build.ps1` 실행 결과(빌드 성공, CTest `CommonTests` 통과), 설치 후 명령 출력, 그리고 사용자 보고이다.
+
+설치 후 확인된 사실: `Get-AppxPackage Runedia.GitHubDesktopExplorer`가 Status `Ok`, InstallLocation `dist\package`를 반환했고, 레거시 키와 `Open-GitHubDesktop.ps1`은 존재하지 않는다. 사용자는 `Install.ps1`로 설치한 뒤 정상 동작한다고 보고했다.
 
 | 항목 | 상태 |
 |---|---|
 | AC-03, AC-04, AC-05 (`.git` 디렉터리/파일, 현재 폴더만 검사) | 단위 테스트로 검증 |
 | AC-07, AC-08 (공백, 한글 경로) | 경로 판별과 명령줄 구성을 단위 테스트로 검증. 실제 GitHub Desktop 실행은 미검증 |
 | 긴 경로 (22.6) | 판별만 단위 테스트로 검증 |
-| AC-01, AC-02, AC-09 (Explorer 메뉴 표시/숨김) | 미검증. 패키지를 아직 등록하지 않았다 |
-| AC-06 (CLI 실행) | 코드 구현. 실제 실행 미검증 |
-| AC-10, AC-11 (레거시 정리) | `installer/Cleanup-Legacy.ps1` 구현. 미실행 |
+| AC-01, AC-02, AC-09 (Explorer 메뉴 표시/숨김) | 사용자 보고로 정상 동작. 화면 증거나 자동 테스트는 없음 |
+| AC-06 (CLI 실행) | 사용자 보고로 정상 동작. 경로 유형(공백/한글/긴 경로)별 실제 실행은 개별 확인하지 않음 |
+| AC-10, AC-11 (레거시 정리) | 설치 후 레거시 키와 스크립트가 없음을 확인 |
 | AC-12 (UI 지연) | 미측정. 상태 조회는 `GetFileAttributesW` 한 번과 사이트 체인 조회만 수행 |
 | AC-13, AC-14 | 코드상 네트워크 호출 없음. CLI 미발견 시 오류 메시지 구현, 동작 미검증 |
 | 서명된 Sparse Package 배포 | 미구현 (후속 과제) |
