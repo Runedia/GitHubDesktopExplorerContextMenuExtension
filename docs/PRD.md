@@ -770,10 +770,9 @@ GitHubDesktopExplorerContextMenuExtension/
 │   ├── PRD.md
 │   └── decisions/          버전별 결정 기록
 ├── CMakeLists.txt
-└── build.ps1               빌드 + 테스트 + dist\package 구성
+├── build.ps1               빌드 + 테스트 + dist\package 구성
+└── README.md
 ```
-
-README.md는 아직 없다.
 
 ---
 
@@ -950,4 +949,4 @@ GitHub Desktop에서 현재 저장소 열림
 | AC-12 (UI 지연) | 미측정. 상태 조회는 `GetFileAttributesW` 한 번과 사이트 체인 조회만 수행 |
 | AC-13, AC-14 | 코드상 네트워크 호출 없음. CLI 미발견 시 오류 메시지 구현, 동작 미검증 |
 | 서명된 Sparse Package 배포 | 미구현 (후속 과제) |
-| README.md | 미작성 |
+| README.md | 작성 완료 |
