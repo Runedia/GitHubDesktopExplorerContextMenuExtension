@@ -937,7 +937,7 @@ GitHub Desktop에서 현재 저장소 열림
 
 검증 근거는 `build.ps1` 실행 결과(빌드 성공, CTest `CommonTests` 통과), 설치 후 명령 출력, 그리고 사용자 보고이다.
 
-설치 후 확인된 사실: `Get-AppxPackage Runedia.GitHubDesktopExplorer`가 Status `Ok`, InstallLocation `dist\package`를 반환했고, 레거시 키와 `Open-GitHubDesktop.ps1`은 존재하지 않는다. 사용자는 `Install.ps1`로 설치한 뒤 정상 동작한다고 보고했다.
+설치 후 확인된 사실: `Get-AppxPackage Runedia.GitHubDesktopExplorer`가 Status `Ok`, InstallLocation `%USERPROFILE%\.GitHubDesktopExplorer\package`를 반환했고, 레거시 키와 `Open-GitHubDesktop.ps1`은 존재하지 않는다. 사용자는 `Install.ps1`로 설치한 뒤 Explorer 메뉴 표시와 실행이 정상 동작하며 특이사항이 없다고 보고했다.
 
 | 항목 | 상태 |
 |---|---|
