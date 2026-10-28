@@ -28,7 +28,19 @@ Remove-LegacyContextMenu
 
 $existing = Get-AppxPackage -Name 'Runedia.GitHubDesktopExplorer'
 if ($existing) { Remove-AppxPackage -Package $existing.PackageFullName }
-Add-AppxPackage -Register (Resolve-Path -LiteralPath $manifest).Path
+
+# 빌드 출력(dist\package)이 재빌드로 삭제되어도 등록이 유지되도록 고정 위치로 복사해 등록한다.
+# %LOCALAPPDATA% 아래에서는 Add-AppxPackage -Register 가 실패하므로 사용자 프로필 아래를 쓴다.
+$installDir = Join-Path $env:USERPROFILE '.GitHubDesktopExplorer\package'
+if (Test-Path -LiteralPath $installDir) { Remove-Item -LiteralPath $installDir -Recurse -Force }
+New-Item -ItemType Directory -Path $installDir -Force | Out-Null
+# 등록 시 Windows 가 만드는 숨김 폴더(microsoft.system.package.metadata)는 복사하지 않는다.
+Get-ChildItem -LiteralPath $PackageDir -Force |
+    Where-Object Name -ne 'microsoft.system.package.metadata' |
+    Copy-Item -Destination $installDir -Recurse -Force
+Write-Output "설치 위치: $installDir"
+
+Add-AppxPackage -Register (Join-Path $installDir 'AppxManifest.xml')
 
 $cli = Get-Command -Name github -CommandType Application -ErrorAction SilentlyContinue
 if ($cli) {

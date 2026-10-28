@@ -18,5 +18,15 @@ if ($existing) {
     Write-Output '등록된 패키지가 없습니다.'
 }
 
+$installDir = Join-Path $env:USERPROFILE '.GitHubDesktopExplorer'
+if (Test-Path -LiteralPath $installDir) {
+    try {
+        Remove-Item -LiteralPath $installDir -Recurse -Force
+        Write-Output "제거: $installDir"
+    } catch {
+        Write-Warning "DLL 이 Explorer 에 로드되어 있어 폴더를 지우지 못했습니다. Explorer 재시작 후 직접 삭제하세요: $installDir"
+    }
+}
+
 Remove-LegacyContextMenu
 Write-Output '제거 완료. 메뉴가 남아 있으면 Explorer 를 재시작하세요.'
