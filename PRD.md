@@ -216,7 +216,7 @@ Directory\Background
 
 Windows 11의 현대적인 Explorer Context Menu 등록에는 패키지 manifest를 통한 `windows.fileExplorerContextMenus` 및 COM class 등록을 사용한다.
 
-프로젝트는 가능하면 **MSIX / Sparse Package 방식**을 사용하여 Windows 11의 새 Context Menu에 정상적으로 통합한다.
+패키지 manifest(`package/AppxManifest.xml`)로 Windows 11의 새 Context Menu에 통합한다. 현재 등록 방식은 서명하지 않은 loose-file 패키지(`Add-AppxPackage -Register`)이며 Windows 개발자 모드가 필요하다. 서명된 Sparse Package(MSIX) 배포는 후속 과제이다. (근거: `decisions/v0.1.0.md`)
 
 Legacy:
 
@@ -359,25 +359,28 @@ github PATH\TO\REPO
 
 # 11. GitHub CLI 탐색
 
-`github.exe`의 위치를 하드코딩하지 않는다.
+GitHub Desktop CLI의 위치를 하드코딩하지 않는다.
 
-우선 Windows 환경 변수 `PATH`에서:
+Windows 환경 변수 `PATH`에서 다음 순서로 찾는다.
 
 ```text
 github.exe
+github.cmd
+github.bat
 ```
 
-를 찾는다.
+공식 GitHub Desktop 설치본(3.6.x)은 `github.exe`가 아니라 `%LOCALAPPDATA%\GitHubDesktop\bin\github.bat`를 제공한다. (근거: `decisions/v0.1.0.md`)
 
-예상되는 일반적인 동작:
+실행 방식:
 
 ```text
-CreateProcess / ShellExecute
-        ↓
-github.exe
+github.exe        → CreateProcess로 직접 실행
+github.cmd / .bat → %SystemRoot%\System32\cmd.exe /d /s /c ""<cli>" "<folder>""
         ↓
 GitHub Desktop
 ```
+
+배치 파일 경로는 cmd.exe가 재해석할 수 있으므로, 대상 경로에 `%`, `^`, `"`, 줄바꿈이 있으면 실행하지 않고 오류를 표시한다. `.exe` 경로에는 이 제한이 없다.
 
 GitHub Desktop의 설치 위치:
 
@@ -393,7 +396,7 @@ C:\Users\<user>\AppData\Local\GitHubDesktop\
 
 ## 12.1 GitHub CLI를 찾을 수 없음
 
-`github.exe` 실행에 실패하면 사용자에게 명확한 오류를 표시한다.
+GitHub Desktop CLI를 찾지 못하거나 실행에 실패하면 사용자에게 명확한 오류를 표시한다.
 
 예:
 
@@ -439,7 +442,7 @@ Context Menu에는 GitHub Desktop 아이콘을 사용한다.
 
 우선순위:
 
-1. GitHub Desktop 공식 아이콘 resource 사용
+1. GitHub Desktop 공식 아이콘 resource 사용 (탐색한 CLI 경로의 상위 폴더에 있는 `GitHubDesktop.exe`의 첫 번째 아이콘)
 2. 프로젝트에서 제공하는 별도 `.ico`
 3. 아이콘을 찾을 수 없을 경우 기본 Shell icon 사용
 
@@ -478,7 +481,7 @@ GitHub Desktop에서 이 저장소 열기
 1. Shell Extension 설치
 2. COM Class 등록
 3. Explorer Context Menu 등록
-4. 필요한 MSIX / Sparse Package 등록
+4. 패키지 등록 (`Add-AppxPackage -Register`, 개발자 모드 필요)
 5. GitHub Desktop CLI 존재 여부 확인
 6. 설치 완료 후 Explorer 재시작 또는 Shell refresh 안내
 
@@ -611,12 +614,12 @@ Shell Extension은 Explorer 프로세스의 일부로 동작할 수 있으므로
 - 사용자 데이터 수집
 - telemetry
 - 자동 업데이트 서버 통신
-- shell command 문자열을 통한 임의 명령 실행
+- shell command 문자열을 통한 임의 명령 실행 (단, GitHub Desktop CLI가 `.bat`인 경우에 한해 고정된 형식의 `cmd.exe /d /s /c` 호출만 허용하며, 위험 문자가 포함된 경로는 거부한다. 11장 참조)
 
-실행 대상은 고정된 GitHub Desktop CLI:
+실행 대상은 PATH에서 탐색한 GitHub Desktop CLI:
 
 ```text
-github.exe
+github.exe | github.cmd | github.bat
 ```
 
 이며, 사용자가 선택한 현재 폴더 경로만 인자로 전달한다.
@@ -704,7 +707,7 @@ Windows에서 지원되는 범위 내에서 긴 repository path를 테스트한�
 
 ## 22.7 GitHub Desktop 미설치
 
-Shell Extension 자체는 설치할 수 있으나 `github.exe`가 없는 경우 실행 시 명확한 오류를 제공한다.
+Shell Extension 자체는 설치할 수 있으나 GitHub Desktop CLI(`github.exe`/`.cmd`/`.bat`)가 없는 경우 실행 시 명확한 오류를 제공한다.
 
 가능하면 installer 단계에서 감지하고 경고한다.
 
@@ -712,7 +715,7 @@ Shell Extension 자체는 설치할 수 있으나 `github.exe`가 없는 경우 
 
 ## 22.8 GitHub Desktop CLI 미설치
 
-GitHub Desktop이 존재하지만 `github.exe`가 PATH에 없는 경우를 테스트한다.
+GitHub Desktop이 존재하지만 CLI가 PATH에 없는 경우를 테스트한다.
 
 ---
 
@@ -753,31 +756,23 @@ Windows 10 지원은 요구사항에 포함하지 않는다.
 권장 구조:
 
 ```text
-GitHubDesktopExplorer/
+GitHubDesktopExplorerContextMenuExtension/
 ├── src/
-│   ├── ShellExtension/
-│   │   ├── GitHubDesktopCommand.cpp
-│   │   ├── GitHubDesktopCommand.h
-│   │   ├── ClassFactory.cpp
-│   │   └── ClassFactory.h
-│   │
-│   └── Common/
-│       ├── GitRepository.cpp
-│       └── GitRepository.h
-│
+│   ├── ShellExtension/     COM DLL (IExplorerCommand, ClassFactory, DllMain, .rc, .def)
+│   ├── Common/             GitRepository, GitHubCli (DLL과 테스트가 공유)
+│   └── Stub/               매니페스트 Application용 자리표시자 실행 파일
 ├── package/
 │   ├── AppxManifest.xml
 │   └── Assets/
-│
-├── installer/
-│
-├── tests/
-│
-├── README.md
+├── installer/              Install.ps1, Uninstall.ps1, Cleanup-Legacy.ps1
+├── tests/                  CommonTests.cpp (CTest)
+├── decisions/              버전별 결정 기록
+├── CMakeLists.txt
+├── build.ps1               빌드 + 테스트 + dist\package 구성
 └── PRD.md
 ```
 
-실제 프로젝트에서 기술 선택에 따라 구조를 변경할 수 있다.
+README.md는 아직 없다.
 
 ---
 
@@ -874,11 +869,11 @@ GitHub Desktop이 설치되어 있지 않거나 CLI를 찾을 수 없는 경우 
 - `Directory\Background`
 - `.git` detection
 - `ECS_HIDDEN`
-- `github.exe` invocation
+- GitHub Desktop CLI invocation
 
 ### Phase 2 — Windows 11 Integration
 
-- MSIX / Sparse Package
+- 패키지 manifest (loose-file 등록; 서명된 Sparse Package는 후속)
 - Windows 11 기본 Context Menu
 - 아이콘
 - Explorer reload
@@ -934,3 +929,21 @@ GitHub Desktop에서 현재 저장소 열림
 ```
 
 일반 폴더에서는 해당 메뉴가 존재하지 않는다.
+---
+
+# 29. 구현 상태 (v0.1.0, 2026-10-29)
+
+검증 근거는 `build.ps1` 실행 결과(빌드 성공, CTest `CommonTests` 통과)이다.
+
+| 항목 | 상태 |
+|---|---|
+| AC-03, AC-04, AC-05 (`.git` 디렉터리/파일, 현재 폴더만 검사) | 단위 테스트로 검증 |
+| AC-07, AC-08 (공백, 한글 경로) | 경로 판별과 명령줄 구성을 단위 테스트로 검증. 실제 GitHub Desktop 실행은 미검증 |
+| 긴 경로 (22.6) | 판별만 단위 테스트로 검증 |
+| AC-01, AC-02, AC-09 (Explorer 메뉴 표시/숨김) | 미검증. 패키지를 아직 등록하지 않았다 |
+| AC-06 (CLI 실행) | 코드 구현. 실제 실행 미검증 |
+| AC-10, AC-11 (레거시 정리) | `installer/Cleanup-Legacy.ps1` 구현. 미실행 |
+| AC-12 (UI 지연) | 미측정. 상태 조회는 `GetFileAttributesW` 한 번과 사이트 체인 조회만 수행 |
+| AC-13, AC-14 | 코드상 네트워크 호출 없음. CLI 미발견 시 오류 메시지 구현, 동작 미검증 |
+| 서명된 Sparse Package 배포 | 미구현 (후속 과제) |
+| README.md | 미작성 |
